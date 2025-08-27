@@ -32,8 +32,8 @@ It combines the functionality of several popular libraries into a single, powerf
 - **Arduino IDE** (or PlatformIO) with **ESP32 board support** installed  
 - **Libraries:**  
   - [ESPAsyncWebServer](https://github.com/me-no-dev/ESPAsyncWebServer)  
-  - [AsyncWebdav](https://github.com/your-library-link) *(if public)*  
-  - [SCPI-Linq](https://github.com/your-library-link) *(if public)*  
+  - [AsyncWebdav](https://github.com/rostwolke/ESPAsyncWebdav)  
+  - [SCPI-Linq](https://github.com/johannesbehr/SCPI-Linc)  
   - [ArduinoJson](https://arduinojson.org/)  
   - Camera driver (built into ESP32 Arduino core)  
 
@@ -43,7 +43,7 @@ It combines the functionality of several popular libraries into a single, powerf
 
 1. Clone this repository:  
    ```bash
-   git clone https://github.com/yourusername/Esp32CamAdvancedWebserver.git
+   git clone https://github.com/johannesbehr/Esp32CamAdvancedWebserver.git
    ```  
 
 2. Open the project in Arduino IDE or PlatformIO.  
