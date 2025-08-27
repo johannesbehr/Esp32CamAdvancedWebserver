@@ -1,0 +1,8 @@
+[
+  { "title": "Startseite", "url": "/index.html" },
+  { "title": "SCPI-Eingabe", "url": "/scpi.html" },
+  { "title": "Kamera", "url": "/cam/" },
+  { "title": "System", "url": "/system.html" },
+  { "title": "Update", "url": "/update.html" },
+  { "title": "Dateien", "url": "/fileman.html" }
+]

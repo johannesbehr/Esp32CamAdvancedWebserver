@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>SCPI Servo-Steuerung</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+    }
+    input, textarea, button {
+      font-size: 1rem;
+      margin: 0.5rem 0;
+      width: 100%;
+    }
+    textarea {
+      height: 200px;
+      resize: vertical;
+    }
+    .slider-container {
+      margin-bottom: 1rem;
+    }
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .angle-display {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Servo-Steuerung (SCPI)</h2>
+
+  <div class="slider-container">
+    <div class="slider-label">
+      <label for="servoSlider">Servo-Winkel (0–180°):</label>
+      <span id="angleValue" class="angle-display">90°</span>
+    </div>
+    <input type="range" id="servoSlider" min="0" max="180" value="90" step="1" oninput="updateAngle(this.value)" onchange="sendServoCommand(this.value)" />
+  </div>
+
+  <h3>Manueller SCPI-Befehl</h3>
+
+  <label for="commandInput">Befehl:</label>
+  <input type="text" id="commandInput" placeholder="z.B. servo:write 12 90" />
+
+  <button onclick="sendCommand()">Ausführen</button>
+
+  <label for="responseOutput">Antwort:</label>
+  <textarea id="responseOutput" readonly></textarea>
+
+  <script>
+    const channel = 12; // Zielkanal für servo:write
+
+    function updateAngle(val) {
+      document.getElementById('angleValue').textContent = val + "°";
+    }
+
+    function sendServoCommand(angle) {
+      const cmd = `servo:write ${channel} ${angle}`;
+      sendScpi(cmd);
+    }
+
+    function sendCommand() {
+      const cmdInput = document.getElementById('commandInput').value;
+      sendScpi(cmdInput);
+    }
+
+    function sendScpi(cmd) {
+      const encodedCmd = encodeURIComponent(cmd);
+      const url = `/scpi?cmd=${encodedCmd}`;
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP-Fehler: ${response.status}`);
+          }
+          return response.text();
+        })
+        .then(data => {
+          document.getElementById('responseOutput').value = data;
+        })
+        .catch(error => {
+          document.getElementById('responseOutput').value = 'Fehler: ' + error.message;
+        });
+    }
+
+    // Enter-Taste in Eingabefeld abfangen
+    document.getElementById('commandInput').addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        sendCommand();
+      }
+    });
+  </script>
+</body>
+</html>

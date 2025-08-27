@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Firmware Update</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #status { margin-bottom: 10px; font-weight: bold; }
+    button { padding: 8px 12px; margin: 5px; }
+    button:disabled { background: #ccc; color: #666; }
+    progress { width: 100%; height: 20px;}
+    #uploadArea { border: 2px dashed #ccc; padding: 20px; text-align: center; margin-top: 20px; background: #f9f9f9; }
+    #uploadArea.dragover { background: #e0f7fa; }
+    input[type="file"] { display: none; }	
+</style>
+</head>
+<body>
+<script src="/js/menu.js"></script>
+<link rel="stylesheet" href="/css/menu.css">
+
+<h2>Firmware-Update</h2>
+
+
+
+<div id="status">Status: Unbekannt</div>
+<div id="update" style="display:none;">
+	<progress id="progress" value="0" max="100"></progress><br>
+	<button id="updateBtn" onclick="startUpdate()" disabled>Update durchführen</button>
+</div>
+<div id="hint" style="display:none; margin-top:10px; color: #666;">
+ <div id="uploadArea">Dateien hierher ziehen oder <label for="fileInput" style="color:blue; cursor:pointer;">Datei auswählen</label>
+    <input type="file" id="fileInput" onchange="handleFileSelect(event)">
+  </div>
+  <progress id="uploadProgress" style="display:none; width:100%; height:20px;"></progress>
+</div>
+
+
+<script>
+
+let uploadInProgress = false;
+
+async function fetchStatus() {
+    try {
+		if(uploadInProgress) return;
+        const res = await fetch('/update/');
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+
+        const btn = document.getElementById('updateBtn');
+        const progress = document.getElementById('progress');
+		const status = document.getElementById('status');
+		const hint = document.getElementById('hint');
+		const update = document.getElementById('update');
+	
+        if (data.status === "Update running") {
+            status.textContent = "Update läuft";
+			btn.disabled = true;
+            hint.style.display = 'none';
+			update.style.display = 'block';
+            progress.value = data.progress || 0;
+
+        } else if (data.status === "Update available") {
+            status.textContent = "Bereit für Update";
+            btn.disabled = false;
+            hint.style.display = 'none';
+			update.style.display = 'block';
+			progress.value = 0;
+
+        } else if (data.status === "Update started") {
+            status.textContent = "Update gestartet";
+            btn.disabled = true;
+            hint.style.display = 'none';
+			update.style.display = 'block';
+            progress.value = 0;
+
+        } else if (data.status === "No update available") {
+            status.textContent = "Firmware hochladen";
+            btn.disabled = true;
+			update.style.display = 'none';
+            progress.value = 0;
+            hint.style.display = 'block';
+        }
+    } catch (err) {
+        document.getElementById('status').textContent = "Fehler beim Abrufen des Status.";
+        console.error(err);
+    }
+}
+
+function startUpdate() {
+    fetch('/update/?start=1')
+        .then(fetchStatus)
+        .catch(console.error);
+}
+
+function handleFileSelect(evt) {
+  const files = evt.target.files;
+  if (files.length) {
+    Array.from(files).forEach(file => {
+      uploadFile(file)
+        .then(() => {
+			uploadInProgress = false;
+          //refreshFileList();                 // Ansicht aktualisieren
+          evt.target.value = '';             // Input resetten
+        })
+        .catch(err => alert(err.message));
+    });
+  }
+}
+
+function uploadFile(file) {
+	
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+	uploadInProgress = true;
+    xhr.open('PUT', '/dav/update.bin');
+
+    // Fortschritt anzeigen
+    const progressBar = document.getElementById('uploadProgress');
+    if (progressBar) {
+      progressBar.value = 0;
+      progressBar.max = file.size;
+      progressBar.style.display = 'block';
+    }
+
+    xhr.upload.onprogress = (event) => {
+      if (progressBar && event.lengthComputable) {
+        progressBar.value = event.loaded;
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (progressBar) progressBar.style.display = 'none';
+        resolve();
+      } else {
+        reject(new Error(`Upload fehlgeschlagen: ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Netzwerkfehler beim Upload'));
+    xhr.send(file);
+  });
+}
+
+// Drag & Drop initialisieren
+const uploadArea = document.getElementById('uploadArea');
+
+// Notwendig, damit Drop funktioniert
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('dragover');
+});
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('dragover');
+});
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    Array.from(files).forEach(file => {
+      uploadFile(file)
+        .then(() => {uploadInProgress = false;})
+        .catch(err => alert(err.message));
+    });
+  }
+});
+
+
+// alle 5 Sekunden aktualisieren
+setInterval(fetchStatus, 5000);
+
+// sofort beim Laden starten
+fetchStatus();
+</script>
+
+</body>
+</html>

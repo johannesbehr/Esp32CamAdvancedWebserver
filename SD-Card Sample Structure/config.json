@@ -1,0 +1,8 @@
+{ "wifi": [
+	{ "ssid": "XXXXXXX", "password": "XXXXXXX", "dhcp": true }, 
+	{ "ssid": "XXXXXXX", "password": "XXXXXXX", "dhcp": false, "static":
+		{ "ip": "192.168.17.10", "gateway": "192.168.17.1", "subnet": "255.255.255.0", "dns": "192.168.17.1" } } 
+	], 
+	"device": 
+	{ "name": "esp32-cam", "timezone": "Europe/Berlin" } 
+}

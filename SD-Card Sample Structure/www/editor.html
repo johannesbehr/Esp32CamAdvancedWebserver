@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>File Editor</title>
+  
+  <link rel="stylesheet" href="/js/codemirror/lib/codemirror.min.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: sans-serif;
+      font-size: 120%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .CodeMirror { 
+      height: 100%;
+    }
+
+    #editor {
+      flex: 1;
+      height: 100%;
+    }
+
+    .toolbar {
+      padding: 0.5em;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5em;
+    }
+
+    button {
+      font-size: 1rem;
+    }
+
+  </style>
+  
+  <script src="/js/codemirror/lib/codemirror.min.js"></script>
+  <script src="/js/codemirror/mode/bundle.js"></script>
+</head>
+<body>
+  <div id="toolbar">
+    <span id="filename"></span>
+    <button onclick="save()">💾 Speichern</button>
+    <button onclick="closeWindow()">↩️ Abbrechen</button>
+  </div>
+  <textarea id="editor"></textarea>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const file = params.get('file');
+    const ext = params.get('type') || 'txt';
+	const path = file.slice(0, file.lastIndexOf('/') + 1);
+
+    document.getElementById('filename').textContent = file;
+	let mode = 'text/plain';
+	let script = '';
+	
+	if(ext=='json'||ext=='js'){
+		mode = 'javascript';
+	}else if(ext=='html'){
+		mode = 'htmlmixed';
+	}else if(ext=='xml'){
+		mode = 'xml';
+	}else if(ext=='css'){
+		mode = 'css';
+	}
+
+    let editor;
+	
+    fetch('/dav' + file)
+      .then(r => r.text())
+      .then(text => {
+      editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+        lineNumbers: true,
+        mode: mode,
+        theme: 'default',
+        viewportMargin: Infinity // ← volle Höhe
+      });
+      editor.setValue(text);
+      editor.focus();
+    });
+	
+
+
+	function loadScript(src, callback){
+		const script = document.createElement('script');
+		script.src = src;
+		script.async = true;
+		script.onload = () => {
+			console.log(`${src} geladen`);
+			if (callback) callback(); // Funktion ausführen, wenn fertig geladen
+		};
+		document.head.appendChild(script);
+	}
+
+    function save2() {
+      const content = editor.getValue();
+      fetch('/dav' + file, {
+        method: 'PUT',
+        body: content
+      }).then(() => alert("Gespeichert."));
+	  //.then(() => window.open("fileman.html?dir=" + encodeURIComponent(path),"_self"));
+    }
+
+    function save() {
+	  const content = editor.getValue();
+	  const blob = new Blob([content], { type: "application/octet-stream" });
+
+	  fetch('/dav' + file, {
+		method: 'PUT',
+		body: blob
+	  })
+	  .then(() => alert("Gespeichert."))
+	  .then(() => window.open("fileman.html?dir=" + encodeURIComponent(path),"_self"));
+	}
+	
+    function closeWindow() {
+      window.open("fileman.html?dir=" + encodeURIComponent(path),"_self");
+    }
+  </script>
+</body>
+</html>

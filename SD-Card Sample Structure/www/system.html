@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>System-Informationen</title>
+<style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; min-width: 300px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+</style>
+</head>
+<body>
+
+	<script src="/js/menu.js"></script>
+	<link rel="stylesheet" href="/css/menu.css">
+
+
+<h2>System-Informationen</h2>
+<div id="status">Lade Daten...</div>
+<table id="systemTable" style="display:none;">
+    <thead>
+        <tr>
+            <th>Eigenschaft</th>
+            <th>Wert</th>
+        </tr>
+    </thead>
+    <tbody id="systemBody"></tbody>
+</table>
+
+<script>
+async function fetchSystemInfo() {
+    const statusDiv = document.getElementById('status');
+    const table = document.getElementById('systemTable');
+    const tbody = document.getElementById('systemBody');
+
+    try {
+        const res = await fetch('/system/');
+        if (!res.ok) throw new Error(res.statusText);
+        const data = await res.json();
+
+        // Tabelle leeren
+        tbody.innerHTML = '';
+
+        // Alle Schlüssel/Werte ins HTML schreiben
+        Object.keys(data).forEach(key => {
+            const row = document.createElement('tr');
+
+            const keyCell = document.createElement('td');
+            keyCell.textContent = key;
+            row.appendChild(keyCell);
+
+            const valueCell = document.createElement('td');
+            valueCell.textContent = data[key];
+            row.appendChild(valueCell);
+
+            tbody.appendChild(row);
+        });
+
+        statusDiv.style.display = 'none';
+        table.style.display = 'table';
+    } catch (err) {
+        statusDiv.textContent = "Fehler beim Laden der System-Informationen.";
+        console.error(err);
+    }
+}
+
+// Direkt beim Laden ausführen
+fetchSystemInfo();
+</script>
+
+</body>
+</html>
